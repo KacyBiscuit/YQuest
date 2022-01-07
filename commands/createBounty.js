@@ -72,13 +72,6 @@ module.exports = {
             .setDescription("Leave blank if none")
             .setRequired(false)),
     async execute(interaction) {
-        if(!interaction.member.permissions.has([Permissions.FLAGS.MANAGE_GUILD])) {
-            interaction.reply({
-                embeds: [embedPermission],
-                ephemeral: true
-            })
-            return
-        }
         GuildSettings.findOne({ guild_id: interaction.guild.id }, (err, settings) => {
             if (err) {
                 console.log(err)
@@ -92,14 +85,6 @@ module.exports = {
                 interaction.reply({
                     content: "No server settings found",
                     embeds: [embedError],
-                    ephemeral: true
-                })
-                return
-            }
-            if(!interaction.member.permissions.has([Permissions.FLAGS.MANAGE_MESSAGES])) {
-                interaction.reply({
-                    content: "This is only temporary, but fornow creating bountys is an admin only feature because Kacy is tired and needs rest",
-                    embeds: [embedPermission],
                     ephemeral: true
                 })
                 return
@@ -136,7 +121,7 @@ module.exports = {
             }
             const embedFinal = new MessageEmbed()
             .setColor(Constants.Colors.BLURPLE)
-            .setTitle(`New bounty created by ${interaction.user.name}`)
+            .setTitle(`New Bounty Available!`)
             .setDescription(stars)
             .addFields(
                 {name: 'Bounty Master:', value: interaction.options.getString("bounty-master"), inline: true},
@@ -152,12 +137,47 @@ module.exports = {
                 embedFinal.addField("Reward:", interaction.options.getString("item-reward"), true)
             }
             if(interaction.options.getString("notes")) embedFinal.addField("Notes:", interaction.options.getString("notes"), true)
-            interaction.client.channels.cache.get(settings.bounty_channel_id).send({
-                embeds: [embedFinal]}
-            )
-            interaction.reply({
-                embeds: [embedSuccess]
-            })
+            if(!interaction.member.permissions.has([Permissions.FLAGS.MANAGE_MESSAGES])) {
+                if(!settings.bounty_approval == True) {
+                    interaction.client.channels.cache.get(settings.quest_channel_id).send({
+                        embeds: [embedFinal]
+                    })
+                    interaction.reply({
+                        embeds: [embedSuccess]
+                    })
+                    return
+                }
+                const buttons = new MessageActionRow()
+                buttons.addComponents(
+                    new MessageButton()
+                        .setCustomId("bounty-approve")
+                        .setLabel("✅ Approve!")
+                        .setStyle("SUCCESS"),
+                    new MessageButton()
+                        .setCustomId("decline")
+                        .setLabel("⛔ Decline!")
+                        .setStyle("DANGER")
+                )
+                try {
+                    const mesg = interaction.reply({
+                        content: "Awaiting approval from a moderator",
+                        embeds: [embedFinal],
+                        components: [buttons],
+                        fetchReply: true
+                    })
+                } catch (err) {
+                    console.log(err)
+                }
+                return
+            } 
+            else {
+                interaction.client.channels.cache.get(settings.guild_channel_id).send({
+                    embeds: [embedFinal]
+                })
+                interaction.reply({
+                    embeds: [embedSuccess]
+                })
+            }
         })
     }
  }

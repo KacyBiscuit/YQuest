@@ -1,5 +1,5 @@
 const {SlashCommandBuilder} = require("@discordjs/builders")
-const {MessageEmbed, Constants, Permissions } = require("discord.js")
+const {MessageEmbed, Constants, Permissions, MessageActionRow, MessageButton } = require("discord.js")
 const GuildSettings = require("../models/GuildSettings")
 
 const embedError = new MessageEmbed()
@@ -72,13 +72,6 @@ module.exports = {
             .setDescription("Leave blank if none")
             .setRequired(false)),
     async execute(interaction) {
-        if(!interaction.member.permissions.has([Permissions.FLAGS.MANAGE_GUILD])) {
-            interaction.reply({
-                embeds: [embedPermission],
-                ephemeral: true
-            })
-            return
-        }
         GuildSettings.findOne({ guild_id: interaction.guild.id }, (err, settings) => {
             if (err) {
                 console.log(err)
@@ -92,14 +85,6 @@ module.exports = {
                 interaction.reply({
                     content: "No server settings found",
                     embeds: [embedError],
-                    ephemeral: true
-                })
-                return
-            }
-            if(!interaction.member.permissions.has([Permissions.FLAGS.MANAGE_MESSAGES])) {
-                interaction.reply({
-                    content: "This is only temporary, but fornow creating quests is an admin only feature because Kacy is tired and needs rest",
-                    embeds: [embedPermission],
                     ephemeral: true
                 })
                 return
@@ -127,7 +112,7 @@ module.exports = {
             }
             const embedFinal = new MessageEmbed()
             .setColor(Constants.Colors.BLURPLE)
-            .setTitle(`New quest created by ${interaction.user.name}`)
+            .setTitle(`New Quest Available`)
             .setDescription(stars)
             .addFields(
                 {name: 'Quest Master:', value: interaction.options.getString("quest-master"), inline: true},
@@ -147,12 +132,47 @@ module.exports = {
                 embedFinal.addField("Reward:", s, true)
             }
             if(interaction.options.getString("notes")) embedFinal.addField("Notes:", interaction.options.getString("notes"), false)
-            interaction.client.channels.cache.get(settings.quest_channel_id).send({
-                embeds: [embedFinal]}
-            )
-            interaction.reply({
-                embeds: [embedSuccess]
-            })
+            if(!interaction.member.permissions.has([Permissions.FLAGS.MANAGE_MESSAGES])) {
+                if(!settings.quest_approval == True) {
+                    interaction.client.channels.cache.get(settings.quest_channel_id).send({
+                        embeds: [embedFinal]
+                    })
+                    interaction.reply({
+                        embeds: [embedSuccess]
+                    })
+                    return
+                }
+                const buttons = new MessageActionRow()
+                buttons.addComponents(
+                    new MessageButton()
+                        .setCustomId("quest-approve")
+                        .setLabel("✅ Approve!")
+                        .setStyle("SUCCESS"),
+                    new MessageButton()
+                        .setCustomId("decline")
+                        .setLabel("⛔ Decline!")
+                        .setStyle("DANGER")
+                )
+                try {
+                    const mesg = interaction.reply({
+                        content: "Awaiting approval from a moderator",
+                        embeds: [embedFinal],
+                        components: [buttons],
+                        fetchReply: true
+                    })
+                } catch (err) {
+                    console.log(err)
+                }
+                return
+            } 
+            else {
+                interaction.client.channels.cache.get(settings.quest_channel_id).send({
+                    embeds: [embedFinal]
+                })
+                interaction.reply({
+                    embeds: [embedSuccess]
+                })
+            }
         })
     }
  }

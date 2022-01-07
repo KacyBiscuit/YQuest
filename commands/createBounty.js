@@ -138,7 +138,7 @@ module.exports = {
             }
             if(interaction.options.getString("notes")) embedFinal.addField("Notes:", interaction.options.getString("notes"), true)
             if(!interaction.member.permissions.has([Permissions.FLAGS.MANAGE_MESSAGES])) {
-                if(!settings.bounty_approval == True) {
+                if(!settings.bounty_approval == true) {
                     interaction.client.channels.cache.get(settings.quest_channel_id).send({
                         embeds: [embedFinal]
                     })

@@ -23,9 +23,6 @@ module.exports = {
                     await rest.put(Routes.applicationGuildCommands(CLIENT_ID, process.env.TEST_GUILD_ID_ONE), {
                         body: commands
                     })
-                    await rest.put(Routes.applicationGuildCommands(CLIENT_ID, process.env.TEST_GUILD_ID_TWO), {
-                        body: commands
-                    })
                     console.log("Commands registered Locally")
                 }
             } catch (err) {

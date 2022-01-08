@@ -12,7 +12,8 @@
     "discord.js": "^13.5.0",
     "dotenv": "^10.0.0",
     "mongoose": "^6.1.5",
-    "nodemon": "^2.0.15"
+    "nodemon": "^2.0.15",
+    "unb-api": "^1.2.3"
   },
   "scripts": {
     "dev": "nodemon index.js",

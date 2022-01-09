@@ -53,7 +53,7 @@ module.exports = {
             })
             return
         }   
-        UserProfile.findOne({ guild_id: interaction.guild.id, user_id: interaction.member.id }, (err, user) => {
+        UserProfile.findOne({ guild_id: interaction.guild.id, user_id: interaction.options.getMentionable("user").id }, (err, user) => {
             if (err) {
                 console.log(err)
                 interaction.reply({
@@ -72,7 +72,11 @@ module.exports = {
                 })
             }
             if(interaction.options.getString("bio")) {
-                user.bio = interaction.options.getString("bio")
+                if (interaction.options.getString("bio").length > 1023) {
+                    user.bio = interaction.options.getString("bio").substr(0,1020) + "..."
+                } else {
+                    user.bio = interaction.options.getString("bio")
+                }
             }
             if(interaction.options.getString("nation")) {
                 NationSchema.findOne({ guild_id: interaction.guild.id, name: interaction.options.getString("nation")}, (err, nation) => {
